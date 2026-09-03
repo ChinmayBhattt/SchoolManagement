@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -24,9 +25,11 @@ import androidx.navigation.compose.rememberNavController
 import com.tx.edusphere.presentation.components.AppTopBar
 import com.tx.edusphere.presentation.explore.ExploreScreen
 import com.tx.edusphere.presentation.home.HomeScreen
+import com.tx.edusphere.presentation.home.StudentViewModel
 import com.tx.edusphere.presentation.navigation.Screen
 import com.tx.edusphere.presentation.notifications.NotificationsScreen
 import com.tx.edusphere.presentation.profile.ProfileScreen
+import com.tx.edusphere.presentation.profile.ProfileViewModel
 
 sealed class BottomNavItem(val screen: Screen, val title: String, val icon: ImageVector) {
     object Home : BottomNavItem(Screen.Home, "Home", Icons.Default.Home)
@@ -36,7 +39,11 @@ sealed class BottomNavItem(val screen: Screen, val title: String, val icon: Imag
 }
 
 @Composable
-fun MainScreen() {
+fun MainScreen(
+    rootNavController: NavHostController,
+    profileViewModel: ProfileViewModel,
+    studentViewModel: StudentViewModel
+) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -85,10 +92,25 @@ fun MainScreen() {
             startDestination = Screen.Home.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(Screen.Home.route) { HomeScreen() }
-            composable(Screen.Explore.route) { ExploreScreen() }
+            composable(Screen.Home.route) { 
+                HomeScreen(
+                    studentViewModel = studentViewModel,
+                    profileViewModel = profileViewModel,
+                    onNavigate = { route -> rootNavController.navigate(route) }
+                ) 
+            }
+            composable(Screen.Explore.route) { 
+                ExploreScreen(
+                    onNavigate = { route -> rootNavController.navigate(route) }
+                ) 
+            }
             composable(Screen.Notifications.route) { NotificationsScreen() }
-            composable(Screen.Profile.route) { ProfileScreen() }
+            composable(Screen.Profile.route) { 
+                ProfileScreen(
+                    viewModel = profileViewModel,
+                    onNavigate = { route -> rootNavController.navigate(route) }
+                ) 
+            }
         }
     }
 }

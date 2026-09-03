@@ -3,8 +3,6 @@ package com.tx.edusphere.presentation.home
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -12,6 +10,8 @@ import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,25 +23,43 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tx.edusphere.presentation.components.AppCard
 import com.tx.edusphere.presentation.components.StatCard
+import com.tx.edusphere.presentation.navigation.Screen
+import com.tx.edusphere.presentation.profile.ProfileViewModel
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    studentViewModel: StudentViewModel,
+    profileViewModel: ProfileViewModel,
+    onNavigate: (String) -> Unit
+) {
+    val userName by profileViewModel.userName.collectAsState()
+    val userClass by profileViewModel.userClass.collectAsState()
+    val userSection by profileViewModel.userSection.collectAsState()
+    
+    val overallAttendance by studentViewModel.overallAttendance.collectAsState()
+    val pendingAssignments by studentViewModel.pendingAssignmentsCount.collectAsState()
+    val gpa by studentViewModel.gpa.collectAsState()
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(bottom = 16.dp)
     ) {
-        item { HomeHeader(userName = "Alex") }
+        item { HomeHeader(userName = userName) }
         
         item {
             SectionTitle("Quick Overview")
-            OverviewGrid()
+            OverviewGrid(
+                attendance = overallAttendance,
+                assignments = pendingAssignments,
+                gpa = gpa
+            )
         }
 
         item {
             SectionTitle("Quick Actions")
-            QuickActionsGrid()
+            QuickActionsGrid(onNavigate)
         }
 
         item {
@@ -110,19 +128,19 @@ fun SectionTitle(title: String) {
 }
 
 @Composable
-fun OverviewGrid() {
+fun OverviewGrid(attendance: Int, assignments: Int, gpa: Float) {
     Column(modifier = Modifier.padding(horizontal = 20.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             StatCard(
                 title = "Attendance",
-                value = "94%",
+                value = "$attendance%",
                 icon = Icons.Default.CheckCircle,
                 modifier = Modifier.weight(1f),
                 subtitle = "On Track"
             )
             StatCard(
                 title = "Assignments",
-                value = "05",
+                value = String.format("%02d", assignments),
                 icon = Icons.AutoMirrored.Filled.Assignment,
                 modifier = Modifier.weight(1f),
                 subtitle = "Pending"
@@ -131,32 +149,32 @@ fun OverviewGrid() {
         Spacer(modifier = Modifier.height(12.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             StatCard(
+                title = "GPA",
+                value = gpa.toString(),
+                icon = Icons.Default.Grade,
+                modifier = Modifier.weight(1f),
+                subtitle = "Academic"
+            )
+            StatCard(
                 title = "Classes",
                 value = "06",
                 icon = Icons.Default.Class,
                 modifier = Modifier.weight(1f),
                 subtitle = "Today"
             )
-            StatCard(
-                title = "Pending Fees",
-                value = "$450",
-                icon = Icons.Default.AccountBalanceWallet,
-                modifier = Modifier.weight(1f),
-                subtitle = "Due in 3 days"
-            )
         }
     }
 }
 
 @Composable
-fun QuickActionsGrid() {
+fun QuickActionsGrid(onNavigate: (String) -> Unit) {
     val actions = listOf(
-        QuickActionItem("Attendance", Icons.AutoMirrored.Filled.FactCheck, Color(0xFFE3F2FD), Color(0xFF1976D2)),
-        QuickActionItem("Assignments", Icons.Default.Description, Color(0xFFF3E5F5), Color(0xFF7B1FA2)),
-        QuickActionItem("Timetable", Icons.Default.CalendarToday, Color(0xFFFFF3E0), Color(0xFFF57C00)),
-        QuickActionItem("Results", Icons.Default.Assessment, Color(0xFFE8F5E9), Color(0xFF388E3C)),
-        QuickActionItem("Fees", Icons.Default.Payments, Color(0xFFE0F2F1), Color(0xFF00796B)),
-        QuickActionItem("Messages", Icons.AutoMirrored.Filled.Chat, Color(0xFFFCE4EC), Color(0xFFC2185B))
+        QuickActionItem("Attendance", Icons.AutoMirrored.Filled.FactCheck, Color(0xFFE3F2FD), Color(0xFF1976D2), Screen.Attendance.route),
+        QuickActionItem("Assignments", Icons.Default.Description, Color(0xFFF3E5F5), Color(0xFF7B1FA2), Screen.Assignments.route),
+        QuickActionItem("Timetable", Icons.Default.CalendarToday, Color(0xFFFFF3E0), Color(0xFFF57C00), Screen.Timetable.route),
+        QuickActionItem("Results", Icons.Default.Assessment, Color(0xFFE8F5E9), Color(0xFF388E3C), Screen.Performance.route),
+        QuickActionItem("Fees", Icons.Default.Payments, Color(0xFFE0F2F1), Color(0xFF00796B), Screen.Fees.route),
+        QuickActionItem("Messages", Icons.AutoMirrored.Filled.Chat, Color(0xFFFCE4EC), Color(0xFFC2185B), Screen.Messages.route)
     )
 
     Column(modifier = Modifier.padding(horizontal = 20.dp)) {
@@ -167,7 +185,7 @@ fun QuickActionsGrid() {
             ) {
                 for (j in 0 until 3) {
                     if (i + j < actions.size) {
-                        ActionCard(actions[i + j], modifier = Modifier.weight(1f))
+                        ActionCard(actions[i + j], onNavigate, modifier = Modifier.weight(1f))
                     } else {
                         Spacer(modifier = Modifier.weight(1f))
                     }
@@ -177,13 +195,13 @@ fun QuickActionsGrid() {
     }
 }
 
-data class QuickActionItem(val title: String, val icon: ImageVector, val bgColor: Color, val iconColor: Color)
+data class QuickActionItem(val title: String, val icon: ImageVector, val bgColor: Color, val iconColor: Color, val route: String)
 
 @Composable
-fun ActionCard(item: QuickActionItem, modifier: Modifier = Modifier) {
+fun ActionCard(item: QuickActionItem, onNavigate: (String) -> Unit, modifier: Modifier = Modifier) {
     AppCard(
         modifier = modifier,
-        onClick = {}
+        onClick = { onNavigate(item.route) }
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,

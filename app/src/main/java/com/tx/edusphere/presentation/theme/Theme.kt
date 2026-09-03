@@ -43,10 +43,16 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun TXEduSphereTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    themeMode: String = "SYSTEM",
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
+    val darkTheme = when (themeMode) {
+        "LIGHT" -> false
+        "DARK" -> true
+        else -> isSystemInDarkTheme()
+    }
+
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current

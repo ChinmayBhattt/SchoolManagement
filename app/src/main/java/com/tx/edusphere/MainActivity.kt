@@ -9,13 +9,21 @@ import com.tx.edusphere.presentation.navigation.NavGraph
 import com.tx.edusphere.presentation.theme.TXEduSphereTheme
 import dagger.hilt.android.AndroidEntryPoint
 
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.tx.edusphere.presentation.profile.ProfileViewModel
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            TXEduSphereTheme {
+            val viewModel: ProfileViewModel = hiltViewModel()
+            val themeMode by viewModel.themeMode.collectAsState()
+            
+            TXEduSphereTheme(themeMode = themeMode) {
                 val navController = rememberNavController()
                 NavGraph(navController = navController)
             }
