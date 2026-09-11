@@ -19,9 +19,12 @@ import androidx.compose.ui.unit.sp
 import com.tx.edusphere.presentation.components.AppCard
 import com.tx.edusphere.presentation.components.AppEmptyState
 import com.tx.edusphere.presentation.components.SearchBar
+import com.tx.edusphere.presentation.navigation.Screen
 
 @Composable
-fun ExploreScreen() {
+fun ExploreScreen(
+    onNavigate: (String) -> Unit
+) {
     var searchQuery by remember { mutableStateOf("") }
     
     val allModules = remember { getMockModules() }
@@ -75,7 +78,7 @@ fun ExploreScreen() {
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
                         )
-                        RecentlyUsedRow()
+                        RecentlyUsedRow(onNavigate)
                         Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
@@ -92,7 +95,7 @@ fun ExploreScreen() {
                         )
                     }
                     items(modules) { module ->
-                        ModuleCard(module)
+                        ModuleCard(module, onNavigate)
                     }
                 }
             }
@@ -101,12 +104,12 @@ fun ExploreScreen() {
 }
 
 @Composable
-fun ModuleCard(module: SchoolModule) {
+fun ModuleCard(module: SchoolModule, onNavigate: (String) -> Unit) {
     AppCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 6.dp),
-        onClick = { /* Navigate to module */ }
+        onClick = { onNavigate(module.route) }
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -151,7 +154,7 @@ fun ModuleCard(module: SchoolModule) {
 }
 
 @Composable
-fun RecentlyUsedRow() {
+fun RecentlyUsedRow(onNavigate: (String) -> Unit) {
     val recent = listOf(
         getMockModules().find { it.title == "Attendance" }!!,
         getMockModules().find { it.title == "Assignments" }!!,
@@ -165,7 +168,7 @@ fun RecentlyUsedRow() {
         items(recent) { module ->
             AppCard(
                 modifier = Modifier.width(140.dp),
-                onClick = {}
+                onClick = { onNavigate(module.route) }
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                     Icon(
@@ -190,28 +193,29 @@ data class SchoolModule(
     val title: String,
     val description: String,
     val icon: ImageVector,
-    val category: String
+    val category: String,
+    val route: String
 )
 
 fun getMockModules() = listOf(
     // Academic
-    SchoolModule("Classes", "Manage class schedules and sections", Icons.Default.Class, "Academic"),
-    SchoolModule("Timetable", "View daily and weekly schedules", Icons.Default.CalendarViewWeek, "Academic"),
-    SchoolModule("Assignments", "Submit and track assignments", Icons.Default.Assignment, "Academic"),
-    SchoolModule("Exams", "Exam dates and hall tickets", Icons.Default.Quiz, "Academic"),
-    SchoolModule("Results", "Check performance and report cards", Icons.Default.Assessment, "Academic"),
-    SchoolModule("Study Material", "Access notes and resources", Icons.Default.MenuBook, "Academic"),
+    SchoolModule("Classes", "Manage class schedules and sections", Icons.Default.Class, "Academic", Screen.Home.route),
+    SchoolModule("Timetable", "View daily and weekly schedules", Icons.Default.CalendarViewWeek, "Academic", Screen.Timetable.route),
+    SchoolModule("Assignments", "Submit and track assignments", Icons.Default.Assignment, "Academic", Screen.Assignments.route),
+    SchoolModule("Exams", "Exam dates and hall tickets", Icons.Default.Quiz, "Academic", Screen.Home.route),
+    SchoolModule("Results", "Check performance and report cards", Icons.Default.Assessment, "Academic", Screen.Performance.route),
+    SchoolModule("Study Material", "Access notes and resources", Icons.Default.MenuBook, "Academic", Screen.Home.route),
     
     // School Management
-    SchoolModule("Attendance", "View attendance records", Icons.Default.FactCheck, "School Management"),
-    SchoolModule("Fees", "Online fee payment and history", Icons.Default.Payments, "School Management"),
-    SchoolModule("Leave Requests", "Apply for leave or track status", Icons.Default.EventBusy, "School Management"),
-    SchoolModule("Transport", "Track school bus and routes", Icons.Default.DirectionsBus, "School Management"),
-    SchoolModule("Library", "Browse books and track issues", Icons.Default.LibraryBooks, "School Management"),
+    SchoolModule("Attendance", "View attendance records", Icons.Default.FactCheck, "School Management", Screen.Attendance.route),
+    SchoolModule("Fees", "Online fee payment and history", Icons.Default.Payments, "School Management", Screen.Fees.route),
+    SchoolModule("Leave Requests", "Apply for leave or track status", Icons.Default.EventBusy, "School Management", Screen.Home.route),
+    SchoolModule("Transport", "Track school bus and routes", Icons.Default.DirectionsBus, "School Management", Screen.Home.route),
+    SchoolModule("Library", "Browse books and track issues", Icons.Default.LibraryBooks, "School Management", Screen.Home.route),
     
     // Communication
-    SchoolModule("Announcements", "Latest school updates", Icons.Default.Campaign, "Communication"),
-    SchoolModule("Messages", "Chat with teachers or staff", Icons.Default.Chat, "Communication"),
-    SchoolModule("Events", "School calendar and events", Icons.Default.Event, "Communication"),
-    SchoolModule("Notices", "Important circulars and notices", Icons.Default.AssignmentLate, "Communication")
+    SchoolModule("Announcements", "Latest school updates", Icons.Default.Campaign, "Communication", Screen.Home.route),
+    SchoolModule("Messages", "Chat with teachers or staff", Icons.Default.Chat, "Communication", Screen.Messages.route),
+    SchoolModule("Events", "School calendar and events", Icons.Default.Event, "Communication", Screen.Home.route),
+    SchoolModule("Notices", "Important circulars and notices", Icons.Default.AssignmentLate, "Communication", Screen.Home.route)
 )
