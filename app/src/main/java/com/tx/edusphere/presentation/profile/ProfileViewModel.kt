@@ -3,14 +3,13 @@ package com.tx.edusphere.presentation.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tx.edusphere.core.utils.PreferenceManager
+import com.tx.edusphere.domain.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
-import com.tx.edusphere.domain.repository.AuthRepository
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
@@ -36,8 +35,41 @@ class ProfileViewModel @Inject constructor(
     val userSection: StateFlow<String> = preferenceManager.userSection
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "A")
 
+    val userPassword: StateFlow<String> = preferenceManager.userPassword
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "password123")
+
     val notificationsEnabled: StateFlow<Boolean> = preferenceManager.notificationsEnabled
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+
+    val notifyAssignments: StateFlow<Boolean> = preferenceManager.notifyAssignments
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+
+    val notifyAttendance: StateFlow<Boolean> = preferenceManager.notifyAttendance
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+
+    val notifyAnnouncements: StateFlow<Boolean> = preferenceManager.notifyAnnouncements
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+
+    val notifyExams: StateFlow<Boolean> = preferenceManager.notifyExams
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+
+    val notifyFees: StateFlow<Boolean> = preferenceManager.notifyFees
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+
+    val notifyEvents: StateFlow<Boolean> = preferenceManager.notifyEvents
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+
+    val privacyProfileVisible: StateFlow<Boolean> = preferenceManager.privacyProfileVisible
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+
+    val privacyDataSharing: StateFlow<Boolean> = preferenceManager.privacyDataSharing
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    val privacyActivityStatus: StateFlow<Boolean> = preferenceManager.privacyActivityStatus
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+
+    val securityBiometric: StateFlow<Boolean> = preferenceManager.securityBiometric
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     val themeMode: StateFlow<String> = preferenceManager.themeMode
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "SYSTEM")
@@ -54,6 +86,30 @@ class ProfileViewModel @Inject constructor(
     fun setNotificationsEnabled(enabled: Boolean) {
         viewModelScope.launch {
             preferenceManager.setNotificationsEnabled(enabled)
+        }
+    }
+
+    fun setNotificationCategory(categoryKey: String, enabled: Boolean) {
+        viewModelScope.launch {
+            preferenceManager.setNotificationCategory(categoryKey, enabled)
+        }
+    }
+
+    fun setPrivacySetting(settingKey: String, value: Boolean) {
+        viewModelScope.launch {
+            preferenceManager.setPrivacySetting(settingKey, value)
+        }
+    }
+
+    fun setSecurityBiometric(enabled: Boolean) {
+        viewModelScope.launch {
+            preferenceManager.setSecurityBiometric(enabled)
+        }
+    }
+
+    fun updatePassword(newPass: String) {
+        viewModelScope.launch {
+            preferenceManager.updatePassword(newPass)
         }
     }
 

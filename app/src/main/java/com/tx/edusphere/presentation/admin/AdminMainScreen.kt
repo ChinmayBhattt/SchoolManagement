@@ -18,10 +18,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.tx.edusphere.domain.model.UserRole
 import com.tx.edusphere.presentation.components.AppCard
-import com.tx.edusphere.presentation.components.AppTopBar
+import com.tx.edusphere.presentation.components.NativeAdCard
 import com.tx.edusphere.presentation.components.StatCard
 import com.tx.edusphere.presentation.navigation.Screen
 
@@ -29,55 +28,44 @@ import com.tx.edusphere.presentation.navigation.Screen
 fun AdminMainScreen(
     role: UserRole,
     viewModel: AdminViewModel,
-    onLogout: () -> Unit,
     onNavigate: (String) -> Unit
 ) {
     val stats by viewModel.stats.collectAsState()
 
-    Scaffold(
-        topBar = {
-            AppTopBar(
-                title = if (role == UserRole.ADMIN) "Admin Dashboard" else "Faculty Dashboard",
-                actions = {
-                    IconButton(onClick = onLogout) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.Logout, contentDescription = "Logout")
-                    }
-                }
-            )
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+        contentPadding = PaddingValues(20.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        // Statistics Section
+        item {
+            Text(text = "Statistics", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(12.dp))
+            StatisticsSection(stats)
         }
-    ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(MaterialTheme.colorScheme.background),
-            contentPadding = PaddingValues(20.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
-        ) {
-            // Statistics Section
-            item {
-                Text(text = "Statistics", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(12.dp))
-                StatisticsSection(stats)
-            }
 
-            // Quick Actions Section
-            item {
-                Text(text = "Quick Actions", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(12.dp))
-                QuickActionsSection(onNavigate)
-            }
+        // Quick Actions Section
+        item {
+            Text(text = "Quick Actions", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(12.dp))
+            QuickActionsSection(onNavigate)
+        }
 
-            // Management Menu
-            item {
-                Text(text = "Management", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(12.dp))
-                ManagementMenu(role, onNavigate)
-            }
-            
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
-            }
+        item {
+            NativeAdCard()
+        }
+
+        // Management Menu
+        item {
+            Text(text = "Management", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(12.dp))
+            ManagementMenu(role, onNavigate)
+        }
+        
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
@@ -127,7 +115,7 @@ fun QuickActionsSection(onNavigate: (String) -> Unit) {
             AdminAction("Add Student", Icons.Default.PersonAdd, Color(0xFFE3F2FD), Color(0xFF1976D2), Screen.AddEditStudent.createRoute()),
             AdminAction("Assignment", Icons.Default.PostAdd, Color(0xFFF3E5F5), Color(0xFF7B1FA2), Screen.AddEditAssignment.createRoute()),
             AdminAction("Attendance", Icons.Default.CheckCircle, Color(0xFFE8F5E9), Color(0xFF388E3C), Screen.MarkAttendance.route),
-            AdminAction("Announce", Icons.Default.Campaign, Color(0xFFFFF3E0), Color(0xFFF57C00), "")
+            AdminAction("Announce", Icons.Default.Campaign, Color(0xFFFFF3E0), Color(0xFFF57C00), Screen.AddEditAnnouncement.createRoute())
         )
         
         actions.forEach { action ->
@@ -161,6 +149,7 @@ data class AdminAction(val title: String, val icon: ImageVector, val bgColor: Co
 @Composable
 fun ManagementMenu(role: UserRole, onNavigate: (String) -> Unit) {
     val allModules = listOf(
+        ManagementModule("TX AI Assistant", Icons.Default.AutoAwesome, "Ask AI about school analytics & actions", Screen.AiAssistant.route),
         ManagementModule("Students", Icons.Default.Groups, "Manage student records", Screen.StudentList.route),
         ManagementModule("Faculty", Icons.Default.Person, "Faculty management", Screen.FacultyList.route),
         ManagementModule("Classes", Icons.Default.Class, "Define classes", Screen.ClassList.route),
@@ -172,7 +161,7 @@ fun ManagementMenu(role: UserRole, onNavigate: (String) -> Unit) {
         ManagementModule("Events", Icons.Default.Event, "Calendar events", Screen.EventList.route),
         ManagementModule("Timetable", Icons.Default.CalendarToday, "Schedule management", Screen.Timetable.route),
         ManagementModule("Reports", Icons.Default.BarChart, "Data analytics", Screen.Reports.route),
-        ManagementModule("Settings", Icons.Default.Settings, "System preferences", "")
+        ManagementModule("Settings", Icons.Default.Settings, "System preferences", Screen.Profile.route)
     )
 
     val filteredModules = if (role == UserRole.ADMIN) allModules 

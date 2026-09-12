@@ -31,6 +31,18 @@ class LoginViewModel @Inject constructor(
             }
         }
     }
+
+    fun register(email: String, password: String, fullName: String, role: UserRole) {
+        viewModelScope.launch {
+            _uiState.value = LoginUiState.Loading
+            val result = authRepository.register(email, password, fullName, role)
+            result.onSuccess {
+                _uiState.value = LoginUiState.Success
+            }.onFailure { error ->
+                _uiState.value = LoginUiState.Error(error.message ?: "Registration error")
+            }
+        }
+    }
     
     fun resetState() {
         _uiState.value = LoginUiState.Initial
