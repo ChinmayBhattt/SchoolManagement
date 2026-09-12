@@ -1,17 +1,25 @@
 package com.tx.edusphere.data.repository
 
+import com.tx.edusphere.data.remote.dto.*
 import com.tx.edusphere.domain.model.*
 import com.tx.edusphere.domain.repository.StudentRepository
+import io.github.jan.supabase.postgrest.Postgrest
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
-import java.util.UUID
 
 @Singleton
-class StudentRepositoryImpl @Inject constructor() : StudentRepository {
+class StudentRepositoryImpl @Inject constructor(
+    private val supabasePostgrest: Postgrest
+) : StudentRepository {
+
+    private val repositoryScope = CoroutineScope(Dispatchers.IO)
 
     private val _students = MutableStateFlow(
         listOf(
@@ -97,6 +105,68 @@ class StudentRepositoryImpl @Inject constructor() : StudentRepository {
 
     private val _attendanceHistory = MutableStateFlow<List<AttendanceRecord>>(emptyList())
 
+    init {
+        syncInitialDataWithSupabase()
+    }
+
+    private fun syncInitialDataWithSupabase() {
+        repositoryScope.launch {
+            try {
+                val remoteStudents = supabasePostgrest.from("students").select().decodeList<StudentDto>()
+                if (remoteStudents.isNotEmpty()) {
+                    _students.value = remoteStudents.map { it.toDomain() }
+                }
+            } catch (e: Exception) {
+                // Keep local defaults if table not present yet
+            }
+
+            try {
+                val remoteFaculty = supabasePostgrest.from("faculty").select().decodeList<FacultyDto>()
+                if (remoteFaculty.isNotEmpty()) {
+                    _faculty.value = remoteFaculty.map { it.toDomain() }
+                }
+            } catch (e: Exception) {
+                // Keep local defaults
+            }
+
+            try {
+                val remoteClasses = supabasePostgrest.from("classes").select().decodeList<ClassDto>()
+                if (remoteClasses.isNotEmpty()) {
+                    _classes.value = remoteClasses.map { it.toDomain() }
+                }
+            } catch (e: Exception) {
+                // Keep local defaults
+            }
+
+            try {
+                val remoteAssignments = supabasePostgrest.from("assignments").select().decodeList<AssignmentDto>()
+                if (remoteAssignments.isNotEmpty()) {
+                    _assignments.value = remoteAssignments.map { it.toDomain() }
+                }
+            } catch (e: Exception) {
+                // Keep local defaults
+            }
+
+            try {
+                val remoteAnnouncements = supabasePostgrest.from("announcements").select().decodeList<AnnouncementDto>()
+                if (remoteAnnouncements.isNotEmpty()) {
+                    _announcements.value = remoteAnnouncements.map { it.toDomain() }
+                }
+            } catch (e: Exception) {
+                // Keep local defaults
+            }
+
+            try {
+                val remoteEvents = supabasePostgrest.from("events").select().decodeList<EventDto>()
+                if (remoteEvents.isNotEmpty()) {
+                    _events.value = remoteEvents.map { it.toDomain() }
+                }
+            } catch (e: Exception) {
+                // Keep local defaults
+            }
+        }
+    }
+
     override fun getAssignments(): Flow<List<Assignment>> = _assignments
 
     override fun getAttendance(): Flow<List<Attendance>> = flowOf(
@@ -131,6 +201,13 @@ class StudentRepositoryImpl @Inject constructor() : StudentRepository {
         val currentList = _students.value.toMutableList()
         currentList.add(student)
         _students.value = currentList
+        repositoryScope.launch {
+            try {
+                supabasePostgrest.from("students").upsert(StudentDto.fromDomain(student))
+            } catch (e: Exception) {
+                // Log sync error
+            }
+        }
         return Result.success(Unit)
     }
 
@@ -140,6 +217,13 @@ class StudentRepositoryImpl @Inject constructor() : StudentRepository {
         if (index != -1) {
             currentList[index] = student
             _students.value = currentList
+            repositoryScope.launch {
+                try {
+                    supabasePostgrest.from("students").upsert(StudentDto.fromDomain(student))
+                } catch (e: Exception) {
+                    // Log sync error
+                }
+            }
             return Result.success(Unit)
         }
         return Result.failure(Exception("Student not found"))
@@ -151,6 +235,13 @@ class StudentRepositoryImpl @Inject constructor() : StudentRepository {
         if (index != -1) {
             currentList[index] = currentList[index].copy(isActive = false)
             _students.value = currentList
+            repositoryScope.launch {
+                try {
+                    supabasePostgrest.from("students").upsert(StudentDto.fromDomain(currentList[index]))
+                } catch (e: Exception) {
+                    // Log sync error
+                }
+            }
             return Result.success(Unit)
         }
         return Result.failure(Exception("Student not found"))
@@ -169,6 +260,13 @@ class StudentRepositoryImpl @Inject constructor() : StudentRepository {
         val currentList = _faculty.value.toMutableList()
         currentList.add(faculty)
         _faculty.value = currentList
+        repositoryScope.launch {
+            try {
+                supabasePostgrest.from("faculty").upsert(FacultyDto.fromDomain(faculty))
+            } catch (e: Exception) {
+                // Log sync error
+            }
+        }
         return Result.success(Unit)
     }
 
@@ -178,6 +276,13 @@ class StudentRepositoryImpl @Inject constructor() : StudentRepository {
         if (index != -1) {
             currentList[index] = faculty
             _faculty.value = currentList
+            repositoryScope.launch {
+                try {
+                    supabasePostgrest.from("faculty").upsert(FacultyDto.fromDomain(faculty))
+                } catch (e: Exception) {
+                    // Log sync error
+                }
+            }
             return Result.success(Unit)
         }
         return Result.failure(Exception("Faculty not found"))
@@ -189,6 +294,13 @@ class StudentRepositoryImpl @Inject constructor() : StudentRepository {
         if (index != -1) {
             currentList[index] = currentList[index].copy(isActive = false)
             _faculty.value = currentList
+            repositoryScope.launch {
+                try {
+                    supabasePostgrest.from("faculty").upsert(FacultyDto.fromDomain(currentList[index]))
+                } catch (e: Exception) {
+                    // Log sync error
+                }
+            }
             return Result.success(Unit)
         }
         return Result.failure(Exception("Faculty not found"))
@@ -205,6 +317,13 @@ class StudentRepositoryImpl @Inject constructor() : StudentRepository {
         val currentList = _classes.value.toMutableList()
         currentList.add(schoolClass)
         _classes.value = currentList
+        repositoryScope.launch {
+            try {
+                supabasePostgrest.from("classes").upsert(ClassDto.fromDomain(schoolClass))
+            } catch (e: Exception) {
+                // Log sync error
+            }
+        }
         return Result.success(Unit)
     }
 
@@ -214,6 +333,13 @@ class StudentRepositoryImpl @Inject constructor() : StudentRepository {
         if (index != -1) {
             currentList[index] = schoolClass
             _classes.value = currentList
+            repositoryScope.launch {
+                try {
+                    supabasePostgrest.from("classes").upsert(ClassDto.fromDomain(schoolClass))
+                } catch (e: Exception) {
+                    // Log sync error
+                }
+            }
             return Result.success(Unit)
         }
         return Result.failure(Exception("Class not found"))
@@ -225,6 +351,13 @@ class StudentRepositoryImpl @Inject constructor() : StudentRepository {
         if (index != -1) {
             currentList[index] = currentList[index].copy(isActive = false)
             _classes.value = currentList
+            repositoryScope.launch {
+                try {
+                    supabasePostgrest.from("classes").upsert(ClassDto.fromDomain(currentList[index]))
+                } catch (e: Exception) {
+                    // Log sync error
+                }
+            }
             return Result.success(Unit)
         }
         return Result.failure(Exception("Class not found"))
@@ -241,6 +374,13 @@ class StudentRepositoryImpl @Inject constructor() : StudentRepository {
         val currentList = _sections.value.toMutableList()
         currentList.add(section)
         _sections.value = currentList
+        repositoryScope.launch {
+            try {
+                supabasePostgrest.from("sections").upsert(SectionDto.fromDomain(section))
+            } catch (e: Exception) {
+                // Log sync error
+            }
+        }
         return Result.success(Unit)
     }
 
@@ -250,6 +390,13 @@ class StudentRepositoryImpl @Inject constructor() : StudentRepository {
         if (index != -1) {
             currentList[index] = section
             _sections.value = currentList
+            repositoryScope.launch {
+                try {
+                    supabasePostgrest.from("sections").upsert(SectionDto.fromDomain(section))
+                } catch (e: Exception) {
+                    // Log sync error
+                }
+            }
             return Result.success(Unit)
         }
         return Result.failure(Exception("Section not found"))
@@ -261,6 +408,13 @@ class StudentRepositoryImpl @Inject constructor() : StudentRepository {
         if (index != -1) {
             currentList[index] = currentList[index].copy(isActive = false)
             _sections.value = currentList
+            repositoryScope.launch {
+                try {
+                    supabasePostgrest.from("sections").upsert(SectionDto.fromDomain(currentList[index]))
+                } catch (e: Exception) {
+                    // Log sync error
+                }
+            }
             return Result.success(Unit)
         }
         return Result.failure(Exception("Section not found"))
@@ -281,6 +435,13 @@ class StudentRepositoryImpl @Inject constructor() : StudentRepository {
         val currentList = _gradeRecords.value.toMutableList()
         currentList.add(grade)
         _gradeRecords.value = currentList
+        repositoryScope.launch {
+            try {
+                supabasePostgrest.from("grade_records").upsert(GradeRecordDto.fromDomain(grade))
+            } catch (e: Exception) {
+                // Log sync error
+            }
+        }
         return Result.success(Unit)
     }
 
@@ -290,6 +451,13 @@ class StudentRepositoryImpl @Inject constructor() : StudentRepository {
         if (index != -1) {
             currentList[index] = grade
             _gradeRecords.value = currentList
+            repositoryScope.launch {
+                try {
+                    supabasePostgrest.from("grade_records").upsert(GradeRecordDto.fromDomain(grade))
+                } catch (e: Exception) {
+                    // Log sync error
+                }
+            }
             return Result.success(Unit)
         }
         return Result.failure(Exception("Grade record not found"))
@@ -301,6 +469,13 @@ class StudentRepositoryImpl @Inject constructor() : StudentRepository {
         if (index != -1) {
             currentList[index] = currentList[index].copy(isActive = false)
             _gradeRecords.value = currentList
+            repositoryScope.launch {
+                try {
+                    supabasePostgrest.from("grade_records").upsert(GradeRecordDto.fromDomain(currentList[index]))
+                } catch (e: Exception) {
+                    // Log sync error
+                }
+            }
             return Result.success(Unit)
         }
         return Result.failure(Exception("Grade record not found"))
@@ -317,6 +492,13 @@ class StudentRepositoryImpl @Inject constructor() : StudentRepository {
         val currentList = _announcements.value.toMutableList()
         currentList.add(announcement)
         _announcements.value = currentList
+        repositoryScope.launch {
+            try {
+                supabasePostgrest.from("announcements").upsert(AnnouncementDto.fromDomain(announcement))
+            } catch (e: Exception) {
+                // Log sync error
+            }
+        }
         return Result.success(Unit)
     }
 
@@ -326,6 +508,13 @@ class StudentRepositoryImpl @Inject constructor() : StudentRepository {
         if (index != -1) {
             currentList[index] = announcement
             _announcements.value = currentList
+            repositoryScope.launch {
+                try {
+                    supabasePostgrest.from("announcements").upsert(AnnouncementDto.fromDomain(announcement))
+                } catch (e: Exception) {
+                    // Log sync error
+                }
+            }
             return Result.success(Unit)
         }
         return Result.failure(Exception("Announcement not found"))
@@ -337,6 +526,13 @@ class StudentRepositoryImpl @Inject constructor() : StudentRepository {
         if (index != -1) {
             currentList[index] = currentList[index].copy(isActive = false)
             _announcements.value = currentList
+            repositoryScope.launch {
+                try {
+                    supabasePostgrest.from("announcements").upsert(AnnouncementDto.fromDomain(currentList[index]))
+                } catch (e: Exception) {
+                    // Log sync error
+                }
+            }
             return Result.success(Unit)
         }
         return Result.failure(Exception("Announcement not found"))
@@ -353,6 +549,13 @@ class StudentRepositoryImpl @Inject constructor() : StudentRepository {
         val currentList = _events.value.toMutableList()
         currentList.add(event)
         _events.value = currentList
+        repositoryScope.launch {
+            try {
+                supabasePostgrest.from("events").upsert(EventDto.fromDomain(event))
+            } catch (e: Exception) {
+                // Log sync error
+            }
+        }
         return Result.success(Unit)
     }
 
@@ -362,6 +565,13 @@ class StudentRepositoryImpl @Inject constructor() : StudentRepository {
         if (index != -1) {
             currentList[index] = event
             _events.value = currentList
+            repositoryScope.launch {
+                try {
+                    supabasePostgrest.from("events").upsert(EventDto.fromDomain(event))
+                } catch (e: Exception) {
+                    // Log sync error
+                }
+            }
             return Result.success(Unit)
         }
         return Result.failure(Exception("Event not found"))
@@ -373,6 +583,13 @@ class StudentRepositoryImpl @Inject constructor() : StudentRepository {
         if (index != -1) {
             currentList[index] = currentList[index].copy(isActive = false)
             _events.value = currentList
+            repositoryScope.launch {
+                try {
+                    supabasePostgrest.from("events").upsert(EventDto.fromDomain(currentList[index]))
+                } catch (e: Exception) {
+                    // Log sync error
+                }
+            }
             return Result.success(Unit)
         }
         return Result.failure(Exception("Event not found"))
@@ -389,6 +606,13 @@ class StudentRepositoryImpl @Inject constructor() : StudentRepository {
         val currentList = _timetableEntries.value.toMutableList()
         currentList.add(entry)
         _timetableEntries.value = currentList
+        repositoryScope.launch {
+            try {
+                supabasePostgrest.from("timetable_entries").upsert(TimetableEntryDto.fromDomain(entry))
+            } catch (e: Exception) {
+                // Log sync error
+            }
+        }
         return Result.success(Unit)
     }
 
@@ -398,6 +622,13 @@ class StudentRepositoryImpl @Inject constructor() : StudentRepository {
         if (index != -1) {
             currentList[index] = entry
             _timetableEntries.value = currentList
+            repositoryScope.launch {
+                try {
+                    supabasePostgrest.from("timetable_entries").upsert(TimetableEntryDto.fromDomain(entry))
+                } catch (e: Exception) {
+                    // Log sync error
+                }
+            }
             return Result.success(Unit)
         }
         return Result.failure(Exception("Timetable entry not found"))
@@ -409,6 +640,13 @@ class StudentRepositoryImpl @Inject constructor() : StudentRepository {
         if (index != -1) {
             currentList[index] = currentList[index].copy(isActive = false)
             _timetableEntries.value = currentList
+            repositoryScope.launch {
+                try {
+                    supabasePostgrest.from("timetable_entries").upsert(TimetableEntryDto.fromDomain(currentList[index]))
+                } catch (e: Exception) {
+                    // Log sync error
+                }
+            }
             return Result.success(Unit)
         }
         return Result.failure(Exception("Timetable entry not found"))
@@ -424,6 +662,13 @@ class StudentRepositoryImpl @Inject constructor() : StudentRepository {
         val currentList = _assignments.value.toMutableList()
         currentList.add(assignment)
         _assignments.value = currentList
+        repositoryScope.launch {
+            try {
+                supabasePostgrest.from("assignments").upsert(AssignmentDto.fromDomain(assignment))
+            } catch (e: Exception) {
+                // Log sync error
+            }
+        }
         return Result.success(Unit)
     }
 
@@ -433,6 +678,13 @@ class StudentRepositoryImpl @Inject constructor() : StudentRepository {
         if (index != -1) {
             currentList[index] = assignment
             _assignments.value = currentList
+            repositoryScope.launch {
+                try {
+                    supabasePostgrest.from("assignments").upsert(AssignmentDto.fromDomain(assignment))
+                } catch (e: Exception) {
+                    // Log sync error
+                }
+            }
             return Result.success(Unit)
         }
         return Result.failure(Exception("Assignment not found"))
@@ -444,6 +696,15 @@ class StudentRepositoryImpl @Inject constructor() : StudentRepository {
         if (index != -1) {
             currentList.removeAt(index)
             _assignments.value = currentList
+            repositoryScope.launch {
+                try {
+                    supabasePostgrest.from("assignments").delete {
+                        filter { eq("id", id) }
+                    }
+                } catch (e: Exception) {
+                    // Log sync error
+                }
+            }
             return Result.success(Unit)
         }
         return Result.failure(Exception("Assignment not found"))
@@ -459,6 +720,13 @@ class StudentRepositoryImpl @Inject constructor() : StudentRepository {
                 submissionCount = assignment.submissionCount + 1
             )
             _assignments.value = currentList
+            repositoryScope.launch {
+                try {
+                    supabasePostgrest.from("assignments").upsert(AssignmentDto.fromDomain(currentList[index]))
+                } catch (e: Exception) {
+                    // Log sync error
+                }
+            }
             return Result.success(Unit)
         }
         return Result.failure(Exception("Assignment not found"))
@@ -482,6 +750,15 @@ class StudentRepositoryImpl @Inject constructor() : StudentRepository {
             else currentHistory.add(record)
         }
         _attendanceHistory.value = currentHistory
+        repositoryScope.launch {
+            try {
+                records.forEach { record ->
+                    supabasePostgrest.from("attendance_records").upsert(AttendanceRecordDto.fromDomain(record))
+                }
+            } catch (e: Exception) {
+                // Log sync error
+            }
+        }
         return Result.success(Unit)
     }
 

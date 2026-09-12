@@ -8,17 +8,16 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.tx.edusphere.domain.model.UserRole
 import com.tx.edusphere.presentation.components.AppButton
 import com.tx.edusphere.presentation.components.AppTextField
@@ -33,6 +32,8 @@ fun LoginScreen(
     
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var fullName by remember { mutableStateOf("") }
+    var isRegisterMode by remember { mutableStateOf(false) }
     var currentStep by remember { mutableStateOf<LoginStep>(LoginStep.RoleSelection) }
 
     LaunchedEffect(uiState) {
@@ -69,12 +70,12 @@ fun LoginScreen(
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "Welcome back",
+                text = if (isRegisterMode) "Create your Supabase Account" else "Welcome back",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.outline
             )
             
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(36.dp))
 
             AnimatedContent(
                 targetState = currentStep,
@@ -94,13 +95,21 @@ fun LoginScreen(
                     is LoginStep.CredentialsInput -> {
                         CredentialsInputContent(
                             role = step.role,
+                            fullName = fullName,
+                            onFullNameChange = { fullName = it },
                             email = email,
                             onEmailChange = { email = it },
                             password = password,
                             onPasswordChange = { password = it },
+                            isRegisterMode = isRegisterMode,
+                            onToggleMode = { isRegisterMode = !isRegisterMode },
                             isLoading = uiState is LoginUiState.Loading,
-                            onLoginClick = {
-                                viewModel.login(email, password, step.role)
+                            onAuthClick = {
+                                if (isRegisterMode) {
+                                    viewModel.register(email, password, fullName, step.role)
+                                } else {
+                                    viewModel.login(email, password, step.role)
+                                }
                             },
                             onBackClick = {
                                 currentStep = LoginStep.RoleSelection
@@ -120,13 +129,13 @@ fun RoleSelectionContent(onRoleSelected: (UserRole) -> Unit) {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         AppButton(
-            text = "Student Login",
+            text = "Student Portal",
             onClick = { onRoleSelected(UserRole.STUDENT) },
             modifier = Modifier.fillMaxWidth()
         )
         AppButton(
-            text = "Admin / Faculty Login",
-            onClick = { onRoleSelected(UserRole.ADMIN) }, // Default to ADMIN, user can switch inside if needed
+            text = "Admin / Faculty Portal",
+            onClick = { onRoleSelected(UserRole.ADMIN) },
             isSecondary = true,
             modifier = Modifier.fillMaxWidth()
         )
@@ -136,12 +145,16 @@ fun RoleSelectionContent(onRoleSelected: (UserRole) -> Unit) {
 @Composable
 fun CredentialsInputContent(
     role: UserRole,
+    fullName: String,
+    onFullNameChange: (String) -> Unit,
     email: String,
     onEmailChange: (String) -> Unit,
     password: String,
     onPasswordChange: (String) -> Unit,
+    isRegisterMode: Boolean,
+    onToggleMode: () -> Unit,
     isLoading: Boolean,
-    onLoginClick: () -> Unit,
+    onAuthClick: () -> Unit,
     onBackClick: () -> Unit
 ) {
     var internalRole by remember { mutableStateOf(role) }
@@ -151,11 +164,15 @@ fun CredentialsInputContent(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = when (internalRole) {
-                UserRole.STUDENT -> "Student Login"
-                UserRole.ADMIN -> "Admin Login"
-                UserRole.FACULTY -> "Faculty Login"
-                else -> "Login"
+            text = if (isRegisterMode) {
+                "Register ${internalRole.name.lowercase().replaceFirstChar { it.uppercase() }}"
+            } else {
+                when (internalRole) {
+                    UserRole.STUDENT -> "Student Login"
+                    UserRole.ADMIN -> "Admin Login"
+                    UserRole.FACULTY -> "Faculty Login"
+                    else -> "Login"
+                }
             },
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
@@ -184,11 +201,21 @@ fun CredentialsInputContent(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        if (isRegisterMode) {
+            AppTextField(
+                value = fullName,
+                onValueChange = onFullNameChange,
+                label = "Full Name",
+                leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) }
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
         AppTextField(
             value = email,
             onValueChange = onEmailChange,
-            label = if (internalRole == UserRole.STUDENT) "Student ID / Email" else "Email / Employee ID",
-            leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) }
+            label = if (internalRole == UserRole.STUDENT) "Student Email / ID" else "Email Address",
+            leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) }
         )
         
         Spacer(modifier = Modifier.height(16.dp))
@@ -196,36 +223,37 @@ fun CredentialsInputContent(
         AppTextField(
             value = password,
             onValueChange = onPasswordChange,
-            label = "Password",
+            label = "Password (min 6 chars)",
             isPassword = true,
             leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) }
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        TextButton(
-            onClick = { /* Forgot Password logic */ },
-            modifier = Modifier.align(Alignment.End)
-        ) {
-            Text("Forgot Password?", style = MaterialTheme.typography.labelLarge)
-        }
-
         Spacer(modifier = Modifier.height(24.dp))
 
         AppButton(
-            text = "Login",
-            onClick = onLoginClick,
+            text = if (isRegisterMode) "Sign Up with Supabase" else "Sign In with Supabase",
+            onClick = onAuthClick,
             isLoading = isLoading,
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
+
+        TextButton(onClick = onToggleMode) {
+            Text(
+                text = if (isRegisterMode) "Already have an account? Sign In" else "Don't have an account? Sign Up",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         TextButton(onClick = onBackClick) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Back to selection")
+                Text("Back to portal selection")
             }
         }
     }

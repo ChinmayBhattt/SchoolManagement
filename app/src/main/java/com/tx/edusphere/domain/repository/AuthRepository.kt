@@ -8,5 +8,6 @@ interface AuthRepository {
     val userRole: Flow<UserRole>
     
     suspend fun login(email: String, password: String, role: UserRole): Result<Unit>
+    suspend fun register(email: String, password: String, fullName: String, role: UserRole): Result<Unit>
     suspend fun logout()
 }

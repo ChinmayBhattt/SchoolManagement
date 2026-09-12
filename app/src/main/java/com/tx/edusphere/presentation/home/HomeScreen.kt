@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tx.edusphere.presentation.components.AppCard
+import com.tx.edusphere.presentation.components.NativeAdCard
 import com.tx.edusphere.presentation.components.StatCard
 import com.tx.edusphere.presentation.navigation.Screen
 import com.tx.edusphere.presentation.profile.ProfileViewModel
@@ -60,6 +61,10 @@ fun HomeScreen(
         item {
             SectionTitle("Quick Actions")
             QuickActionsGrid(onNavigate)
+        }
+
+        item {
+            NativeAdCard()
         }
 
         item {

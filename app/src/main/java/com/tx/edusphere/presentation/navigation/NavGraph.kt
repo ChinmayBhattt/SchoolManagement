@@ -3,6 +3,8 @@ package com.tx.edusphere.presentation.navigation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,8 +17,10 @@ import androidx.navigation.navArgument
 import androidx.navigation.NavType
 import com.tx.edusphere.domain.model.UserRole
 import com.tx.edusphere.presentation.admin.*
+import com.tx.edusphere.presentation.ai.*
 import com.tx.edusphere.presentation.auth.LoginScreen
 import com.tx.edusphere.presentation.auth.LoginViewModel
+import com.tx.edusphere.presentation.components.AppTopBar
 import com.tx.edusphere.presentation.home.*
 import com.tx.edusphere.presentation.main.MainScreen
 import com.tx.edusphere.presentation.profile.*
@@ -84,7 +88,9 @@ fun NavGraph(navController: NavHostController) {
             MainScreen(
                 rootNavController = navController,
                 profileViewModel = profileViewModel,
-                studentViewModel = studentViewModel
+                studentViewModel = studentViewModel,
+                adminViewModel = adminViewModel,
+                role = UserRole.STUDENT
             )
         }
 
@@ -105,30 +111,34 @@ fun NavGraph(navController: NavHostController) {
         }
 
         composable(Screen.AdminDashboard.route) {
-            AdminMainScreen(
+            MainScreen(
+                rootNavController = navController,
+                profileViewModel = profileViewModel,
+                studentViewModel = studentViewModel,
+                adminViewModel = adminViewModel,
                 role = UserRole.ADMIN,
-                viewModel = adminViewModel,
                 onLogout = {
                     profileViewModel.logout()
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
                     }
-                },
-                onNavigate = { route -> navController.navigate(route) }
+                }
             )
         }
 
         composable(Screen.FacultyDashboard.route) {
-            AdminMainScreen(
+            MainScreen(
+                rootNavController = navController,
+                profileViewModel = profileViewModel,
+                studentViewModel = studentViewModel,
+                adminViewModel = adminViewModel,
                 role = UserRole.FACULTY,
-                viewModel = adminViewModel,
                 onLogout = {
                     profileViewModel.logout()
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
                     }
-                },
-                onNavigate = { route -> navController.navigate(route) }
+                }
             )
         }
 
@@ -514,6 +524,33 @@ fun NavGraph(navController: NavHostController) {
                 onBackClick = { navController.popBackStack() }
             )
         }
+
+        // Settings / Profile Screen
+        composable(Screen.Profile.route) {
+            Scaffold(
+                topBar = {
+                    AppTopBar(
+                        title = "Settings & Profile",
+                        onBackClick = { navController.popBackStack() }
+                    )
+                }
+            ) { paddingValues ->
+                Box(modifier = Modifier.padding(paddingValues)) {
+                    ProfileScreen(
+                        viewModel = profileViewModel,
+                        onNavigate = { route -> navController.navigate(route) }
+                    )
+                }
+            }
+        }
+
+        // AI Assistant Screen
+        composable(Screen.AiAssistant.route) {
+            val aiAssistantViewModel: AiAssistantViewModel = hiltViewModel()
+            AiAssistantScreen(
+                viewModel = aiAssistantViewModel
+            )
+        }
         
         // Profile Sub-screens
         composable(Screen.EditProfile.route) {
@@ -529,10 +566,19 @@ fun NavGraph(navController: NavHostController) {
             ThemeSettingsScreen(viewModel = profileViewModel, onBackClick = { navController.popBackStack() })
         }
         composable(Screen.Privacy.route) {
-            PrivacyScreen(onBackClick = { navController.popBackStack() })
+            PrivacyScreen(viewModel = profileViewModel, onBackClick = { navController.popBackStack() })
         }
         composable(Screen.Security.route) {
-            SecurityScreen(onBackClick = { navController.popBackStack() })
+            SecurityScreen(
+                viewModel = profileViewModel,
+                onLogoutClick = {
+                    profileViewModel.logout()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onBackClick = { navController.popBackStack() }
+            )
         }
         composable(Screen.HelpCenter.route) {
             HelpCenterScreen(onBackClick = { navController.popBackStack() })

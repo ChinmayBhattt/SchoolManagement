@@ -4,8 +4,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
@@ -14,12 +16,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.tx.edusphere.presentation.components.AppButton
 import com.tx.edusphere.presentation.components.AppCard
 import com.tx.edusphere.presentation.navigation.Screen
@@ -30,6 +30,9 @@ fun ProfileScreen(
     onNavigate: (String) -> Unit
 ) {
     var showLogoutDialog by remember { mutableStateOf(false) }
+    var showTermsDialog by remember { mutableStateOf(false) }
+    var showPrivacyPolicyDialog by remember { mutableStateOf(false) }
+
     val userName by viewModel.userName.collectAsState()
     val userClass by viewModel.userClass.collectAsState()
     val userSection by viewModel.userSection.collectAsState()
@@ -38,7 +41,7 @@ fun ProfileScreen(
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
             title = { Text("Log Out") },
-            text = { Text("Are you sure you want to log out of TX EduSphere?") },
+            text = { Text("Are you sure you want to log out of TX EduSphere? Your local session will be securely cleared.") },
             confirmButton = {
                 TextButton(onClick = { 
                     viewModel.logout()
@@ -51,6 +54,53 @@ fun ProfileScreen(
             dismissButton = {
                 TextButton(onClick = { showLogoutDialog = false }) {
                     Text("Cancel")
+                }
+            }
+        )
+    }
+
+    if (showTermsDialog) {
+        AlertDialog(
+            onDismissRequest = { showTermsDialog = false },
+            title = { Text("Terms & Conditions") },
+            text = {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(text = "TX EduSphere Terms of Service", fontWeight = FontWeight.Bold)
+                    Text(text = "1. Acceptance of Terms: By accessing TX EduSphere, students, faculty, and administrators agree to comply with school policies and privacy standards.")
+                    Text(text = "2. Academic Integrity: Usage of grades, assignments, and attendance portals must strictly adhere to student code of conduct.")
+                    Text(text = "3. Account Security: Users are responsible for maintaining confidentiality of login credentials.")
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showTermsDialog = false }) {
+                    Text("Close")
+                }
+            }
+        )
+    }
+
+    if (showPrivacyPolicyDialog) {
+        AlertDialog(
+            onDismissRequest = { showPrivacyPolicyDialog = false },
+            title = { Text("Privacy Policy") },
+            text = {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(text = "TX EduSphere Privacy Policy", fontWeight = FontWeight.Bold)
+                    Text(text = "We prioritize the security and confidentiality of student educational records.")
+                    Text(text = "1. Data Collection: Only essential school data (attendance, grades, assignments, profile) is processed.")
+                    Text(text = "2. Data Protection: Credentials and preferences are stored locally and encrypted using Android DataStore preferences.")
+                    Text(text = "3. Third-Party Sharing: Student data is never sold or shared with commercial entities.")
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showPrivacyPolicyDialog = false }) {
+                    Text("Close")
                 }
             }
         )
@@ -86,6 +136,14 @@ fun ProfileScreen(
         item {
             SectionHeader("School Details")
             SchoolInfoSection()
+        }
+
+        item {
+            SectionHeader("About & Legal")
+            AboutLegalSection(
+                onShowTerms = { showTermsDialog = true },
+                onShowPrivacyPolicy = { showPrivacyPolicyDialog = true }
+            )
         }
 
         item {
@@ -216,15 +274,15 @@ fun InfoRow(label: String, value: String) {
 fun SettingsSection(onNavigate: (String) -> Unit) {
     AppCard(modifier = Modifier.padding(horizontal = 20.dp)) {
         Column {
-            SettingsItem(icon = Icons.Default.Notifications, title = "Notifications", description = "Alerts and messages", onClick = { onNavigate("notification_settings") })
+            SettingsItem(icon = Icons.Default.Notifications, title = "Notifications", description = "Alerts and preferences", onClick = { onNavigate("notification_settings") })
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
             SettingsItem(icon = Icons.Default.Language, title = "Language", description = "Select app language", onClick = { onNavigate("language_settings") })
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
             SettingsItem(icon = Icons.Default.Palette, title = "Theme", description = "Light/Dark/System", onClick = { onNavigate("theme_settings") })
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
-            SettingsItem(icon = Icons.Default.Security, title = "Security", description = "Passcode and Biometrics", onClick = { onNavigate("security") })
+            SettingsItem(icon = Icons.Default.Security, title = "Security & Access", description = "Password, Passcode & Permissions", onClick = { onNavigate("security") })
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
-            SettingsItem(icon = Icons.Default.PrivacyTip, title = "Privacy", description = "Profile and data settings", onClick = { onNavigate("privacy") })
+            SettingsItem(icon = Icons.Default.PrivacyTip, title = "Privacy Controls", description = "Data sharing & profile visibility", onClick = { onNavigate("privacy") })
         }
     }
 }
@@ -264,12 +322,28 @@ fun SchoolInfoSection() {
 }
 
 @Composable
+fun AboutLegalSection(
+    onShowTerms: () -> Unit,
+    onShowPrivacyPolicy: () -> Unit
+) {
+    AppCard(modifier = Modifier.padding(horizontal = 20.dp)) {
+        Column {
+            InfoRow(label = "App Version", value = "1.0.0 (Build 100)")
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
+            SupportItem(icon = Icons.Default.Description, title = "Terms & Conditions", onClick = onShowTerms)
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
+            SupportItem(icon = Icons.Default.Policy, title = "Privacy Policy", onClick = onShowPrivacyPolicy)
+        }
+    }
+}
+
+@Composable
 fun SupportSection(onNavigate: (String) -> Unit) {
     AppCard(modifier = Modifier.padding(horizontal = 20.dp)) {
         Column {
-            SupportItem(icon = Icons.AutoMirrored.Filled.HelpOutline, title = "Help Center", onClick = { onNavigate("help_center") })
+            SupportItem(icon = Icons.AutoMirrored.Filled.HelpOutline, title = "Help Center & FAQs", onClick = { onNavigate("help_center") })
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
-            SupportItem(icon = Icons.AutoMirrored.Filled.ContactSupport, title = "Contact School", onClick = { onNavigate("contact_school") })
+            SupportItem(icon = Icons.AutoMirrored.Filled.ContactSupport, title = "Contact School Support", onClick = { onNavigate("contact_school") })
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
             SupportItem(icon = Icons.Default.BugReport, title = "Report a Problem", onClick = { onNavigate("report_problem") })
         }
