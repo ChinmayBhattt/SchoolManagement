@@ -8,6 +8,10 @@ import dagger.hilt.android.HiltAndroidApp
 class EduSphereApp : Application() {
     override fun onCreate() {
         super.onCreate()
-        MobileAds.initialize(this) {}
+        try {
+            MobileAds.initialize(this) {}
+        } catch (e: Exception) {
+            // Safe fallback if AdMob fails initialization
+        }
     }
 }

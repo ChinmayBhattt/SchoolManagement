@@ -33,26 +33,34 @@ fun NativeAdCard(
     var isAdLoaded by remember { mutableStateOf(false) }
 
     DisposableEffect(adUnitId) {
-        val adLoader = AdLoader.Builder(context, adUnitId)
-            .forNativeAd { ad ->
-                nativeAdState?.destroy()
-                nativeAdState = ad
-                isAdLoaded = true
-            }
-            .withAdListener(object : AdListener() {
-                override fun onAdFailedToLoad(error: LoadAdError) {
-                    isAdLoaded = false
+        try {
+            val adLoader = AdLoader.Builder(context, adUnitId)
+                .forNativeAd { ad ->
+                    nativeAdState?.destroy()
+                    nativeAdState = ad
+                    isAdLoaded = true
                 }
-            })
-            .withNativeAdOptions(
-                NativeAdOptions.Builder().build()
-            )
-            .build()
+                .withAdListener(object : AdListener() {
+                    override fun onAdFailedToLoad(error: LoadAdError) {
+                        isAdLoaded = false
+                    }
+                })
+                .withNativeAdOptions(
+                    NativeAdOptions.Builder().build()
+                )
+                .build()
 
-        adLoader.loadAd(AdRequest.Builder().build())
+            adLoader.loadAd(AdRequest.Builder().build())
+        } catch (e: Exception) {
+            isAdLoaded = false
+        }
 
         onDispose {
-            nativeAdState?.destroy()
+            try {
+                nativeAdState?.destroy()
+            } catch (e: Exception) {
+                // Ignore
+            }
         }
     }
 
@@ -62,12 +70,22 @@ fun NativeAdCard(
         ) {
             AndroidView(
                 factory = { ctx ->
-                    val adView = LayoutInflater.from(ctx).inflate(R.layout.native_ad_layout, null) as NativeAdView
-                    populateNativeAdView(nativeAdState!!, adView)
-                    adView
+                    try {
+                        val adView = LayoutInflater.from(ctx).inflate(R.layout.native_ad_layout, null) as NativeAdView
+                        populateNativeAdView(nativeAdState!!, adView)
+                        adView
+                    } catch (e: Exception) {
+                        View(ctx)
+                    }
                 },
                 update = { adView ->
-                    nativeAdState?.let { populateNativeAdView(it, adView) }
+                    try {
+                        if (adView is NativeAdView && nativeAdState != null) {
+                            populateNativeAdView(nativeAdState!!, adView)
+                        }
+                    } catch (e: Exception) {
+                        // Ignore
+                    }
                 },
                 modifier = Modifier.fillMaxWidth().padding(4.dp)
             )
@@ -76,47 +94,51 @@ fun NativeAdCard(
 }
 
 private fun populateNativeAdView(nativeAd: NativeAd, adView: NativeAdView) {
-    val headlineView = adView.findViewById<TextView>(R.id.ad_headline)
-    val bodyView = adView.findViewById<TextView>(R.id.ad_body)
-    val callToActionView = adView.findViewById<Button>(R.id.ad_call_to_action)
-    val iconView = adView.findViewById<ImageView>(R.id.ad_app_icon)
-    val advertiserView = adView.findViewById<TextView>(R.id.ad_advertiser)
+    try {
+        val headlineView = adView.findViewById<TextView>(R.id.ad_headline)
+        val bodyView = adView.findViewById<TextView>(R.id.ad_body)
+        val callToActionView = adView.findViewById<Button>(R.id.ad_call_to_action)
+        val iconView = adView.findViewById<ImageView>(R.id.ad_app_icon)
+        val advertiserView = adView.findViewById<TextView>(R.id.ad_advertiser)
 
-    adView.headlineView = headlineView
-    adView.bodyView = bodyView
-    adView.callToActionView = callToActionView
-    adView.iconView = iconView
-    adView.advertiserView = advertiserView
+        adView.headlineView = headlineView
+        adView.bodyView = bodyView
+        adView.callToActionView = callToActionView
+        adView.iconView = iconView
+        adView.advertiserView = advertiserView
 
-    headlineView?.text = nativeAd.headline
+        headlineView?.text = nativeAd.headline
 
-    if (nativeAd.body == null) {
-        bodyView?.visibility = View.GONE
-    } else {
-        bodyView?.visibility = View.VISIBLE
-        bodyView?.text = nativeAd.body
+        if (nativeAd.body == null) {
+            bodyView?.visibility = View.GONE
+        } else {
+            bodyView?.visibility = View.VISIBLE
+            bodyView?.text = nativeAd.body
+        }
+
+        if (nativeAd.callToAction == null) {
+            callToActionView?.visibility = View.GONE
+        } else {
+            callToActionView?.visibility = View.VISIBLE
+            callToActionView?.text = nativeAd.callToAction
+        }
+
+        if (nativeAd.icon == null) {
+            iconView?.visibility = View.GONE
+        } else {
+            iconView?.setImageDrawable(nativeAd.icon?.drawable)
+            iconView?.visibility = View.VISIBLE
+        }
+
+        if (nativeAd.advertiser == null) {
+            advertiserView?.visibility = View.GONE
+        } else {
+            advertiserView?.visibility = View.VISIBLE
+            advertiserView?.text = nativeAd.advertiser
+        }
+
+        adView.setNativeAd(nativeAd)
+    } catch (e: Exception) {
+        // Safe protection against population crashes
     }
-
-    if (nativeAd.callToAction == null) {
-        callToActionView?.visibility = View.GONE
-    } else {
-        callToActionView?.visibility = View.VISIBLE
-        callToActionView?.text = nativeAd.callToAction
-    }
-
-    if (nativeAd.icon == null) {
-        iconView?.visibility = View.GONE
-    } else {
-        iconView?.setImageDrawable(nativeAd.icon?.drawable)
-        iconView?.visibility = View.VISIBLE
-    }
-
-    if (nativeAd.advertiser == null) {
-        advertiserView?.visibility = View.GONE
-    } else {
-        advertiserView?.visibility = View.VISIBLE
-        advertiserView?.text = nativeAd.advertiser
-    }
-
-    adView.setNativeAd(nativeAd)
 }
