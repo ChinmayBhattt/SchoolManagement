@@ -16,7 +16,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -39,16 +38,20 @@ fun LoginScreen(
     var currentStep by remember { mutableStateOf<LoginStep>(LoginStep.RoleSelection) }
 
     LaunchedEffect(uiState) {
-        if (uiState is LoginUiState.Success) {
-            val role = when (val step = currentStep) {
-                is LoginStep.CredentialsInput -> step.role
-                else -> UserRole.STUDENT
+        when (val state = uiState) {
+            is LoginUiState.Success -> {
+                val role = when (val step = currentStep) {
+                    is LoginStep.CredentialsInput -> step.role
+                    else -> UserRole.STUDENT
+                }
+                viewModel.resetState()
+                onLoginSuccess(role)
             }
-            onLoginSuccess(role)
-            viewModel.resetState()
-        } else if (uiState is LoginUiState.Error) {
-            Toast.makeText(context, (uiState as LoginUiState.Error).message, Toast.LENGTH_SHORT).show()
-            viewModel.resetState()
+            is LoginUiState.Error -> {
+                Toast.makeText(context, state.message, Toast.LENGTH_SHORT).show()
+                viewModel.resetState()
+            }
+            else -> {}
         }
     }
 

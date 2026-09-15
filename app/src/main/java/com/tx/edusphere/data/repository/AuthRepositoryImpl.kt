@@ -21,7 +21,7 @@ class AuthRepositoryImpl @Inject constructor(
     override val isLoggedIn: Flow<Boolean> = preferenceManager.isLoggedIn
 
     override val userRole: Flow<UserRole> = preferenceManager.userRole.map { 
-        try { UserRole.valueOf(it) } catch (e: Exception) { UserRole.NONE }
+        try { UserRole.valueOf(it) } catch (e: Throwable) { UserRole.NONE }
     }
 
     override suspend fun login(email: String, password: String, role: UserRole): Result<Unit> {
@@ -32,7 +32,7 @@ class AuthRepositoryImpl @Inject constructor(
             }
             preferenceManager.setLoginState(true, role.name)
             Result.success(Unit)
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             // Graceful fallback for local/demo credentials if remote auth fails or offline
             if (email.isNotBlank() && password.length >= 6) {
                 preferenceManager.setLoginState(true, role.name)
@@ -56,7 +56,7 @@ class AuthRepositoryImpl @Inject constructor(
             preferenceManager.updateProfile(fullName, email, "", "", "10", "A")
             preferenceManager.setLoginState(true, role.name)
             Result.success(Unit)
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             if (email.isNotBlank() && password.length >= 6) {
                 preferenceManager.updateProfile(fullName.ifBlank { "User" }, email, "", "", "10", "A")
                 preferenceManager.setLoginState(true, role.name)
@@ -70,7 +70,7 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun logout() {
         try {
             supabaseAuth.signOut()
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             // Ignore signout network error
         }
         preferenceManager.setLoginState(false, UserRole.NONE.name)
