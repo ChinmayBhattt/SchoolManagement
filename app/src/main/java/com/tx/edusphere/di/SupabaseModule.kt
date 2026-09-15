@@ -24,13 +24,22 @@ object SupabaseModule {
     @Provides
     @Singleton
     fun provideSupabaseClient(): SupabaseClient {
-        return createSupabaseClient(
-            supabaseUrl = SUPABASE_URL,
-            supabaseKey = SUPABASE_KEY
-        ) {
-            install(Auth)
-            install(Postgrest)
-            install(Realtime)
+        return try {
+            createSupabaseClient(
+                supabaseUrl = SUPABASE_URL,
+                supabaseKey = SUPABASE_KEY
+            ) {
+                install(Auth)
+                install(Postgrest)
+                install(Realtime)
+            }
+        } catch (e: Throwable) {
+            createSupabaseClient(
+                supabaseUrl = SUPABASE_URL,
+                supabaseKey = SUPABASE_KEY
+            ) {
+                install(Postgrest)
+            }
         }
     }
 

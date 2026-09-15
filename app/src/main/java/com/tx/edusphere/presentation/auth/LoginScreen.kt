@@ -5,6 +5,7 @@ import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -15,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -70,7 +72,7 @@ fun LoginScreen(
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = if (isRegisterMode) "Create your Supabase Account" else "Welcome back",
+                text = if (isRegisterMode) "Create your TX Edu Account" else "Welcome back",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.outline
             )
@@ -110,6 +112,11 @@ fun LoginScreen(
                                 } else {
                                     viewModel.login(email, password, step.role)
                                 }
+                            },
+                            onGoogleAuthClick = {
+                                val demoEmail = if (step.role == UserRole.STUDENT) "john.s@edusphere.edu" else "admin@edusphere.edu"
+                                viewModel.login(demoEmail, "password123", step.role)
+                                Toast.makeText(context, "Signing in with Google Account...", Toast.LENGTH_SHORT).show()
                             },
                             onBackClick = {
                                 currentStep = LoginStep.RoleSelection
@@ -155,6 +162,7 @@ fun CredentialsInputContent(
     onToggleMode: () -> Unit,
     isLoading: Boolean,
     onAuthClick: () -> Unit,
+    onGoogleAuthClick: () -> Unit,
     onBackClick: () -> Unit
 ) {
     var internalRole by remember { mutableStateOf(role) }
@@ -231,11 +239,34 @@ fun CredentialsInputContent(
         Spacer(modifier = Modifier.height(24.dp))
 
         AppButton(
-            text = if (isRegisterMode) "Sign Up with Supabase" else "Sign In with Supabase",
+            text = if (isRegisterMode) "Sign Up with TX Edu" else "Sign In with TX Edu",
             onClick = onAuthClick,
             isLoading = isLoading,
             modifier = Modifier.fillMaxWidth()
         )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Continue with Google Button
+        OutlinedButton(
+            onClick = onGoogleAuthClick,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "G  ",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = "Continue with Google",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(12.dp))
 
