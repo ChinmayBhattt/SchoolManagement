@@ -1,13 +1,9 @@
 package com.tx.edusphere.presentation.navigation
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -27,23 +23,11 @@ import com.tx.edusphere.presentation.profile.*
 import com.tx.edusphere.presentation.splash.SplashScreen
 
 @Composable
-fun NavGraph(navController: NavHostController) {
+fun NavGraph(
+    navController: NavHostController,
+    profileViewModel: ProfileViewModel = hiltViewModel()
+) {
     val loginViewModel: LoginViewModel = hiltViewModel()
-    val profileViewModel: ProfileViewModel = hiltViewModel()
-    val studentViewModel: StudentViewModel = hiltViewModel()
-    val adminViewModel: AdminViewModel = hiltViewModel()
-    val studentManagementViewModel: StudentManagementViewModel = hiltViewModel()
-    val assignmentManagementViewModel: AssignmentManagementViewModel = hiltViewModel()
-    val attendanceManagementViewModel: AttendanceManagementViewModel = hiltViewModel()
-    val facultyManagementViewModel: FacultyManagementViewModel = hiltViewModel()
-    val classManagementViewModel: ClassManagementViewModel = hiltViewModel()
-    val sectionManagementViewModel: SectionManagementViewModel = hiltViewModel()
-    val gradeManagementViewModel: GradeManagementViewModel = hiltViewModel()
-    val announcementManagementViewModel: AnnouncementManagementViewModel = hiltViewModel()
-    val eventManagementViewModel: EventManagementViewModel = hiltViewModel()
-    val timetableManagementViewModel: TimetableManagementViewModel = hiltViewModel()
-    val reportsViewModel: ReportsViewModel = hiltViewModel()
-    
     val isLoggedIn by loginViewModel.isLoggedIn.collectAsState(initial = false)
     val userRole by loginViewModel.userRole.collectAsState(initial = UserRole.NONE)
 
@@ -85,16 +69,17 @@ fun NavGraph(navController: NavHostController) {
         }
 
         composable(Screen.StudentDashboard.route) {
+            val studentViewModel: StudentViewModel = hiltViewModel()
             MainScreen(
                 rootNavController = navController,
                 profileViewModel = profileViewModel,
                 studentViewModel = studentViewModel,
-                adminViewModel = adminViewModel,
                 role = UserRole.STUDENT
             )
         }
 
         composable(Screen.Assignments.route) {
+            val studentViewModel: StudentViewModel = hiltViewModel()
             AssignmentsScreen(
                 viewModel = studentViewModel,
                 onAssignmentClick = { id -> navController.navigate(Screen.AssignmentDetail.createRoute(id)) },
@@ -103,14 +88,18 @@ fun NavGraph(navController: NavHostController) {
         }
         
         composable(Screen.Attendance.route) {
+            val studentViewModel: StudentViewModel = hiltViewModel()
             AttendanceScreen(viewModel = studentViewModel, onBackClick = { navController.popBackStack() })
         }
         
         composable(Screen.Performance.route) {
+            val studentViewModel: StudentViewModel = hiltViewModel()
             PerformanceScreen(viewModel = studentViewModel, onBackClick = { navController.popBackStack() })
         }
 
         composable(Screen.AdminDashboard.route) {
+            val studentViewModel: StudentViewModel = hiltViewModel()
+            val adminViewModel: AdminViewModel = hiltViewModel()
             MainScreen(
                 rootNavController = navController,
                 profileViewModel = profileViewModel,
@@ -127,6 +116,8 @@ fun NavGraph(navController: NavHostController) {
         }
 
         composable(Screen.FacultyDashboard.route) {
+            val studentViewModel: StudentViewModel = hiltViewModel()
+            val adminViewModel: AdminViewModel = hiltViewModel()
             MainScreen(
                 rootNavController = navController,
                 profileViewModel = profileViewModel,
@@ -143,6 +134,7 @@ fun NavGraph(navController: NavHostController) {
         }
 
         composable(Screen.StudentList.route) {
+            val studentManagementViewModel: StudentManagementViewModel = hiltViewModel()
             StudentListScreen(
                 viewModel = studentManagementViewModel,
                 userRole = userRole,
@@ -156,6 +148,7 @@ fun NavGraph(navController: NavHostController) {
             route = Screen.StudentDetail.route,
             arguments = listOf(navArgument("studentId") { type = NavType.StringType })
         ) { backStackEntry ->
+            val studentManagementViewModel: StudentManagementViewModel = hiltViewModel()
             val studentId = backStackEntry.arguments?.getString("studentId") ?: return@composable
             StudentDetailScreen(
                 studentId = studentId,
@@ -174,6 +167,7 @@ fun NavGraph(navController: NavHostController) {
                 defaultValue = null
             })
         ) { backStackEntry ->
+            val studentManagementViewModel: StudentManagementViewModel = hiltViewModel()
             val studentId = backStackEntry.arguments?.getString("studentId")
             AddEditStudentScreen(
                 studentId = studentId,
@@ -183,6 +177,7 @@ fun NavGraph(navController: NavHostController) {
         }
 
         composable(Screen.AssignmentList.route) {
+            val assignmentManagementViewModel: AssignmentManagementViewModel = hiltViewModel()
             AssignmentListScreen(
                 viewModel = assignmentManagementViewModel,
                 onAssignmentClick = { id -> navController.navigate(Screen.AssignmentDetail.createRoute(id)) },
@@ -195,6 +190,7 @@ fun NavGraph(navController: NavHostController) {
             route = Screen.AssignmentDetail.route,
             arguments = listOf(navArgument("assignmentId") { type = NavType.StringType })
         ) { backStackEntry ->
+            val assignmentManagementViewModel: AssignmentManagementViewModel = hiltViewModel()
             val assignmentId = backStackEntry.arguments?.getString("assignmentId") ?: return@composable
             AssignmentDetailScreen(
                 assignmentId = assignmentId,
@@ -213,6 +209,7 @@ fun NavGraph(navController: NavHostController) {
                 defaultValue = null
             })
         ) { backStackEntry ->
+            val assignmentManagementViewModel: AssignmentManagementViewModel = hiltViewModel()
             val assignmentId = backStackEntry.arguments?.getString("assignmentId")
             AddEditAssignmentScreen(
                 assignmentId = assignmentId,
@@ -222,6 +219,7 @@ fun NavGraph(navController: NavHostController) {
         }
 
         composable(Screen.MarkAttendance.route) {
+            val attendanceManagementViewModel: AttendanceManagementViewModel = hiltViewModel()
             MarkAttendanceScreen(
                 viewModel = attendanceManagementViewModel,
                 onBackClick = { navController.popBackStack() }
@@ -230,6 +228,7 @@ fun NavGraph(navController: NavHostController) {
 
         // Faculty Management
         composable(Screen.FacultyList.route) {
+            val facultyManagementViewModel: FacultyManagementViewModel = hiltViewModel()
             FacultyListScreen(
                 viewModel = facultyManagementViewModel,
                 userRole = userRole,
@@ -243,6 +242,7 @@ fun NavGraph(navController: NavHostController) {
             route = Screen.FacultyDetail.route,
             arguments = listOf(navArgument("facultyId") { type = NavType.StringType })
         ) { backStackEntry ->
+            val facultyManagementViewModel: FacultyManagementViewModel = hiltViewModel()
             val facultyId = backStackEntry.arguments?.getString("facultyId") ?: return@composable
             FacultyDetailScreen(
                 facultyId = facultyId,
@@ -261,6 +261,7 @@ fun NavGraph(navController: NavHostController) {
                 defaultValue = null
             })
         ) { backStackEntry ->
+            val facultyManagementViewModel: FacultyManagementViewModel = hiltViewModel()
             val facultyId = backStackEntry.arguments?.getString("facultyId")
             AddEditFacultyScreen(
                 facultyId = facultyId,
@@ -271,6 +272,7 @@ fun NavGraph(navController: NavHostController) {
 
         // Class Management
         composable(Screen.ClassList.route) {
+            val classManagementViewModel: ClassManagementViewModel = hiltViewModel()
             ClassListScreen(
                 viewModel = classManagementViewModel,
                 userRole = userRole,
@@ -284,6 +286,7 @@ fun NavGraph(navController: NavHostController) {
             route = Screen.ClassDetail.route,
             arguments = listOf(navArgument("classId") { type = NavType.StringType })
         ) { backStackEntry ->
+            val classManagementViewModel: ClassManagementViewModel = hiltViewModel()
             val classId = backStackEntry.arguments?.getString("classId") ?: return@composable
             ClassDetailScreen(
                 classId = classId,
@@ -302,6 +305,7 @@ fun NavGraph(navController: NavHostController) {
                 defaultValue = null
             })
         ) { backStackEntry ->
+            val classManagementViewModel: ClassManagementViewModel = hiltViewModel()
             val classId = backStackEntry.arguments?.getString("classId")
             AddEditClassScreen(
                 classId = classId,
@@ -312,6 +316,7 @@ fun NavGraph(navController: NavHostController) {
 
         // Section Management
         composable(Screen.SectionList.route) {
+            val sectionManagementViewModel: SectionManagementViewModel = hiltViewModel()
             SectionListScreen(
                 viewModel = sectionManagementViewModel,
                 userRole = userRole,
@@ -325,6 +330,7 @@ fun NavGraph(navController: NavHostController) {
             route = Screen.SectionDetail.route,
             arguments = listOf(navArgument("sectionId") { type = NavType.StringType })
         ) { backStackEntry ->
+            val sectionManagementViewModel: SectionManagementViewModel = hiltViewModel()
             val sectionId = backStackEntry.arguments?.getString("sectionId") ?: return@composable
             SectionDetailScreen(
                 sectionId = sectionId,
@@ -344,6 +350,7 @@ fun NavGraph(navController: NavHostController) {
                 defaultValue = null
             })
         ) { backStackEntry ->
+            val sectionManagementViewModel: SectionManagementViewModel = hiltViewModel()
             val sectionId = backStackEntry.arguments?.getString("sectionId")
             AddEditSectionScreen(
                 sectionId = sectionId,
@@ -354,6 +361,7 @@ fun NavGraph(navController: NavHostController) {
 
         // Grade Management
         composable(Screen.GradeList.route) {
+            val gradeManagementViewModel: GradeManagementViewModel = hiltViewModel()
             GradeListScreen(
                 viewModel = gradeManagementViewModel,
                 userRole = userRole,
@@ -367,6 +375,7 @@ fun NavGraph(navController: NavHostController) {
             route = Screen.GradeDetail.route,
             arguments = listOf(navArgument("gradeId") { type = NavType.StringType })
         ) { backStackEntry ->
+            val gradeManagementViewModel: GradeManagementViewModel = hiltViewModel()
             val gradeId = backStackEntry.arguments?.getString("gradeId") ?: return@composable
             GradeDetailScreen(
                 gradeId = gradeId,
@@ -386,6 +395,7 @@ fun NavGraph(navController: NavHostController) {
                 defaultValue = null
             })
         ) { backStackEntry ->
+            val gradeManagementViewModel: GradeManagementViewModel = hiltViewModel()
             val gradeId = backStackEntry.arguments?.getString("gradeId")
             AddEditGradeScreen(
                 gradeId = gradeId,
@@ -396,6 +406,7 @@ fun NavGraph(navController: NavHostController) {
 
         // Announcement Management
         composable(Screen.AnnouncementList.route) {
+            val announcementManagementViewModel: AnnouncementManagementViewModel = hiltViewModel()
             AnnouncementListScreen(
                 viewModel = announcementManagementViewModel,
                 userRole = userRole,
@@ -409,6 +420,7 @@ fun NavGraph(navController: NavHostController) {
             route = Screen.AnnouncementDetail.route,
             arguments = listOf(navArgument("announcementId") { type = NavType.StringType })
         ) { backStackEntry ->
+            val announcementManagementViewModel: AnnouncementManagementViewModel = hiltViewModel()
             val announcementId = backStackEntry.arguments?.getString("announcementId") ?: return@composable
             AnnouncementDetailScreen(
                 announcementId = announcementId,
@@ -427,6 +439,7 @@ fun NavGraph(navController: NavHostController) {
                 defaultValue = null
             })
         ) { backStackEntry ->
+            val announcementManagementViewModel: AnnouncementManagementViewModel = hiltViewModel()
             val announcementId = backStackEntry.arguments?.getString("announcementId")
             AddEditAnnouncementScreen(
                 announcementId = announcementId,
@@ -437,6 +450,7 @@ fun NavGraph(navController: NavHostController) {
 
         // Event Management
         composable(Screen.EventList.route) {
+            val eventManagementViewModel: EventManagementViewModel = hiltViewModel()
             EventListScreen(
                 viewModel = eventManagementViewModel,
                 userRole = userRole,
@@ -450,6 +464,7 @@ fun NavGraph(navController: NavHostController) {
             route = Screen.EventDetail.route,
             arguments = listOf(navArgument("eventId") { type = NavType.StringType })
         ) { backStackEntry ->
+            val eventManagementViewModel: EventManagementViewModel = hiltViewModel()
             val eventId = backStackEntry.arguments?.getString("eventId") ?: return@composable
             EventDetailScreen(
                 eventId = eventId,
@@ -468,6 +483,7 @@ fun NavGraph(navController: NavHostController) {
                 defaultValue = null
             })
         ) { backStackEntry ->
+            val eventManagementViewModel: EventManagementViewModel = hiltViewModel()
             val eventId = backStackEntry.arguments?.getString("eventId")
             AddEditEventScreen(
                 eventId = eventId,
@@ -478,6 +494,7 @@ fun NavGraph(navController: NavHostController) {
 
         // Timetable Management
         composable(Screen.Timetable.route) {
+            val timetableManagementViewModel: TimetableManagementViewModel = hiltViewModel()
             TimetableScreen(
                 viewModel = timetableManagementViewModel,
                 userRole = userRole,
@@ -491,6 +508,7 @@ fun NavGraph(navController: NavHostController) {
             route = Screen.TimetableDetail.route,
             arguments = listOf(navArgument("entryId") { type = NavType.StringType })
         ) { backStackEntry ->
+            val timetableManagementViewModel: TimetableManagementViewModel = hiltViewModel()
             val entryId = backStackEntry.arguments?.getString("entryId") ?: return@composable
             TimetableDetailScreen(
                 entryId = entryId,
@@ -509,6 +527,7 @@ fun NavGraph(navController: NavHostController) {
                 defaultValue = null
             })
         ) { backStackEntry ->
+            val timetableManagementViewModel: TimetableManagementViewModel = hiltViewModel()
             val entryId = backStackEntry.arguments?.getString("entryId")
             AddEditTimetableScreen(
                 entryId = entryId,
@@ -519,6 +538,7 @@ fun NavGraph(navController: NavHostController) {
 
         // Reports & Analytics Dashboard
         composable(Screen.Reports.route) {
+            val reportsViewModel: ReportsViewModel = hiltViewModel()
             ReportsScreen(
                 viewModel = reportsViewModel,
                 onBackClick = { navController.popBackStack() }
@@ -551,7 +571,7 @@ fun NavGraph(navController: NavHostController) {
                 viewModel = aiAssistantViewModel
             )
         }
-        
+
         // Profile Sub-screens
         composable(Screen.EditProfile.route) {
             EditProfileScreen(viewModel = profileViewModel, onBackClick = { navController.popBackStack() })
